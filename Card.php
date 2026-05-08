@@ -17,7 +17,6 @@ if (isset($_POST['remove'])) {
     exit;
 }
 
-
 if (isset($_POST['update_qty'])) {
     $cart_id = $_POST['cart_id'];
     $action  = $_POST['action'];
@@ -25,15 +24,17 @@ if (isset($_POST['update_qty'])) {
     if ($action == "increase") {
         mysqli_query($conn, "UPDATE cart SET quantity = quantity + 1 WHERE id = $cart_id AND user_id = $user_id");
 
-    } elseif ($action == "decrease") {
+    } 
+elseif ($action == "decrease") {
         
         $qty_result = mysqli_query($conn, "SELECT quantity FROM cart WHERE id = $cart_id AND user_id = $user_id");
         $qty_row    = mysqli_fetch_assoc($qty_result);
 
-        if ($qty_row['quantity'] <= 1) {
+   if ($qty_row['quantity'] <= 1) {
           
-            mysqli_query($conn, "DELETE FROM cart WHERE id = $cart_id AND user_id = $user_id");
-        } else {
+    mysqli_query($conn, "DELETE FROM cart WHERE id = $cart_id AND user_id = $user_id");
+        } 
+else {
             mysqli_query($conn, "UPDATE cart SET quantity = quantity - 1 WHERE id = $cart_id AND user_id = $user_id");
         }
     }
@@ -104,76 +105,74 @@ include 'includes/header.php';
                             onerror="this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80'"
                         >
 
-                        <div class="cart-item-info">
-                            <h3><?php echo $item['name']; ?></h3>
-                            <p><?php echo $item['description']; ?></p>
-                            <div class="cart-item-price">Rs. <?php echo $item['price']; ?></div>
+ <div class="cart-item-info">
+ <h3><?php echo $item['name']; ?></h3>
+ <p><?php echo $item['description']; ?></p>
+  <div class="cart-item-price">Rs. <?php echo $item['price']; ?></div>
+                            
+<div class="qty-controls">
 
-                            <!-- Quantity buttons -->
-                            <div class="qty-controls">
-
-                                <form action="" method="POST" style="display:inline;">
+ <form action="" method="POST" style="display:inline;">
                                     <input type="hidden" name="cart_id" value="<?php echo $item['cart_id']; ?>">
                                     <input type="hidden" name="action" value="decrease">
                                     <button type="submit" name="update_qty" class="qty-btn">−</button>
                                 </form>
 
                                 <span class="qty-num"><?php echo $item['quantity']; ?></span>
+<form action="" method="POST" style="display:inline;">
+  <input type="hidden" name="cart_id" value="<?php echo $item['cart_id']; ?>">
+ <input type="hidden" name="action" value="increase">
+ <button type="submit" name="update_qty" class="qty-btn">+</button>
+  </form>
 
-                                <form action="" method="POST" style="display:inline;">
-                                    <input type="hidden" name="cart_id" value="<?php echo $item['cart_id']; ?>">
-                                    <input type="hidden" name="action" value="increase">
-                                    <button type="submit" name="update_qty" class="qty-btn">+</button>
-                                </form>
+       </div>
+    </div>
 
-                            </div>
-                        </div>
-
-                        <div style="text-align:right; min-width:100px;">
+ <div style="text-align:right; min-width:100px;">
                             <div style="font-weight:700; font-size:16px; margin-bottom:15px;">
-                                Rs. <?php echo $item['line_total']; ?>
+ Rs. <?php echo $item['line_total']; ?>
                             </div>
                             <form action="" method="POST">
                                 <input type="hidden" name="cart_id" value="<?php echo $item['cart_id']; ?>">
                                 <button type="submit" name="remove" class="remove-btn">🗑 Remove</button>
-                            </form>
-                        </div>
-
-                    </div>
-
-                <?php endforeach; ?>
+       </form>
+           </div>
 
             </div>
 
-            <!-- RIGHT: Order Summary -->
-            <div class="order-summary">
+   <?php endforeach; ?>
 
-                <h3>Order Summary</h3>
+     </div>
+   <div class="order-summary">
 
-                <div class="summary-row">
-                    <span>Subtotal</span>
-                    <span>Rs. <?php echo $subtotal; ?></span>
-                </div>
-                <div class="summary-row">
-                    <span>Shipping</span>
-                    <span>Rs. <?php echo $shipping; ?></span>
-                </div>
-                <div class="summary-row total">
-                    <span>Total</span>
-                    <span>Rs. <?php echo $grand_total; ?></span>
-                </div>
+    <h3>Order Summary</h3>
+
+    <div class="summary-row">
+    <span>Subtotal</span>
+   <span>Rs. <?php echo $subtotal; ?></span>
+        </div>
+
+  <div class="summary-row">           <span>Shipping</span>
+ <span>Rs. <?php echo $shipping; ?></span>
+      </div>
+     <div class="summary-row total">
+           <span>Total</span>
+   <span>Rs. <?php echo $grand_total; ?></span>
+       </div>
 
                 <a href="checkout.php" class="checkout-btn">Proceed to Checkout →</a>
 
-                <a href="shop.php" style="display:block; text-align:center; margin-top:14px; font-size:14px; color:var(--text-gray);">
-                    ← Continue Shopping
+<a href="shop.php" style="display:block; text-align:center; margin-top:14px; font-size:14px; color:var(--text-gray);">
+     ← Continue Shopping
                 </a>
 
             </div>
 
         </div>
 
-    <?php endif; ?>
+    <?php 
+endif; 
+?>
 
 </div>
 
