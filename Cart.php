@@ -1,0 +1,180 @@
+<?php
+session_start();
+include 'includes/db.php';
+
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit;
+}
+
+$user_id = $_SESSION['user_id'];
+
+
+if (isset($_POST['remove'])) {
+    $cart_id = $_POST['cart_id'];
+    mysqli_query($conn, "DELETE FROM cart WHERE id = $cart_id AND user_id = $user_id");
+    header("Location: cart.php");
+    exit;
+}
+
+if (isset($_POST['update_qty'])) {
+    $cart_id = $_POST['cart_id'];
+    $action  = $_POST['action'];
+
+
+    if ($action == "increase") {
+        mysqli_query($conn, "UPDATE cart SET quantity = quantity + 1 WHERE id = $cart_id AND user_id = $user_id");
+
+    } 
+elseif ($action == "decrease") {
+
+        $qty_result = mysqli_query($conn, "SELECT quantity FROM cart WHERE id = $cart_id AND user_id = $user_id");
+        $qty_row    = mysqli_fetch_assoc($qty_result);
+
+   if ($qty_row['quantity'] <= 1) {
+
+    mysqli_query($conn, "DELETE FROM cart WHERE id = $cart_id AND user_id = $user_id");
+        } 
+else {
+            mysqli_query($conn, "UPDATE cart SET quantity = quantity - 1 WHERE id = $cart_id AND user_id = $user_id");
+        }
+    }
+
+    header("Location: cart.php");
+    exit;
+}
+
+$cart_result = mysqli_query($conn, "
+    SELECT cart.id as cart_id, cart.quantity,
+           products.id as product_id, products.name, products.price, products.image, products.description
+    FROM cart
+    JOIN products ON cart.product_id = products.id
+    WHERE cart.user_id = $user_id
+");
+
+
+$subtotal    = 0;
+$item_count  = 0;
+$items       = array();
+
+while ($row = mysqli_fetch_assoc($cart_result)) {
+    $row['line_total'] = $row['price'] * $row['quantity'];
+    $subtotal          = $subtotal + $row['line_total'];
+    $item_count        = $item_count + 1;
+    $items[]           = $row;
+}
+
+
+if ($item_count > 0) {
+    $shipping = 200;
+} else {
+    $shipping = 0;
+}
+
+$grand_total = $subtotal + $shipping;
+
+include 'includes/header.php';
+?>
+
+<div class="page-wrapper">
+
+    <h1 class="page-title">🛒 My Cart</h1>
+
+    <?php if ($item_count == 0): ?>
+
+        <div class="empty-cart">
+            <div class="big-emoji">🛒</div>
+            <h2>Your cart is empty</h2>
+            <p>You haven't added anything yet. Go explore!</p>
+            <a href="shop.php" class="hero-btn" style="display:inline-block; margin-top:20px;">Browse Products →</a>
+        </div>
+
+    <?php else: ?>
+
+        <div class="cart-layout">
+
+            <!-- LEFT: Cart Items -->
+            <div class="cart-items">
+
+                <?php foreach ($items as $item): ?>
+
+                    <div class="cart-item">
+
+                        <img
+                            src="<?php echo $item['image']; ?>"
+                            alt="<?php echo $item['name']; ?>"
+                            onerror="this.src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80'"
+                        >
+
+ <div class="cart-item-info">
+ <h3><?php echo $item['name']; ?></h3>
+ <p><?php echo $item['description']; ?></p>
+  <div class="cart-item-price">Rs. <?php echo $item['price']; ?></div>
+
+<div class="qty-controls">
+
+ <form action="" method="POST" style="display:inline;">
+                                    <input type="hidden" name="cart_id" value="<?php echo $item['cart_id']; ?>">
+                                    <input type="hidden" name="action" value="decrease">
+                                    <button type="submit" name="update_qty" class="qty-btn">−</button>
+                                </form>
+
+                                <span class="qty-num"><?php echo $item['quantity']; ?></span>
+<form action="" method="POST" style="display:inline;">
+  <input type="hidden" name="cart_id" value="<?php echo $item['cart_id']; ?>">
+ <input type="hidden" name="action" value="increase">
+ <button type="submit" name="update_qty" class="qty-btn">+</button>
+  </form>
+
+       </div>
+    </div>
+
+ <div style="text-align:right; min-width:100px;">
+                            <div style="font-weight:700; font-size:16px; margin-bottom:15px;">
+ Rs. <?php echo $item['line_total']; ?>
+                            </div>
+                            <form action="" method="POST">
+                                <input type="hidden" name="cart_id" value="<?php echo $item['cart_id']; ?>">
+                                <button type="submit" name="remove" class="remove-btn">🗑 Remove</button>
+       </form>
+           </div>
+
+            </div>
+
+   <?php endforeach; ?>
+
+     </div>
+   <div class="order-summary">
+
+    <h3>Order Summary</h3>
+
+    <div class="summary-row">
+    <span>Subtotal</span>
+   <span>Rs. <?php echo $subtotal; ?></span>
+        </div>
+
+  <div class="summary-row">           <span>Shipping</span>
+ <span>Rs. <?php echo $shipping; ?></span>
+      </div>
+     <div class="summary-row total">
+           <span>Total</span>
+   <span>Rs. <?php echo $grand_total; ?></span>
+       </div>
+
+                <a href="checkout.php" class="checkout-btn">Proceed to Checkout →</a>
+
+<a href="shop.php" style="display:block; text-align:center; margin-top:14px; font-size:14px; color:var(--text-gray);">
+     ← Continue Shopping
+                </a>
+
+            </div>
+
+        </div>
+
+    <?php 
+endif; 
+?>
+
+</div>
+
+<?php include 'includes/footer.php'; ?>
