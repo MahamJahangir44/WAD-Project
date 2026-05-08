@@ -21,6 +21,7 @@ if (isset($_POST['update_qty'])) {
     $cart_id = $_POST['cart_id'];
     $action  = $_POST['action'];
 
+
     if ($action == "increase") {
         mysqli_query($conn, "UPDATE cart SET quantity = quantity + 1 WHERE id = $cart_id AND user_id = $user_id");
 
