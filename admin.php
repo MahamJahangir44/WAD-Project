@@ -18,9 +18,33 @@ if (isset($_POST['add_product'])) {
     $category    = $_POST['category'];
     $stock       = $_POST['stock'];
 
-    mysqli_query($conn, "INSERT INTO products (name, description, price, image, mood, category, stock)
-                         VALUES ('$name', '$description', $price, '$image', '$mood', '$category', $stock)");
+     // prepare SQL query
+    $stmt = mysqli_prepare($conn,
+        "INSERT INTO products
+        (name, description, price, image, mood, category, stock)
+        VALUES (?, ?, ?, ?, ?, ?, ?)"
+    );
 
+    // bind values to placeholders
+    mysqli_stmt_bind_param(
+        $stmt,
+        "ssdsssi",
+        $name,
+        $description,
+        $price,
+        $image,
+        $mood,
+        $category,
+        $stock
+    );
+
+    // execute query
+    mysqli_stmt_execute($stmt);
+
+    // close statement
+    mysqli_stmt_close($stmt);
+
+    // redirect
     header("Location: admin.php?tab=products&msg=added");
     exit;
 }
