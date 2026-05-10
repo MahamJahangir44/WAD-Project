@@ -2,7 +2,7 @@
 session_start();
 include 'includes/db.php';
 
-// Check if already logged in or not
+// check if user is logged in or not
 if (isset($_SESSION['user'])) {
     header("Location: index.php");
     exit;
@@ -19,18 +19,27 @@ if (isset($_POST['login'])) {
         $error = "Please enter your email and password.";
     } else {
 
-        // Find user by email only first
-        $sql    = "SELECT * FROM users WHERE email = '$email'";
-        $result = mysqli_query($conn, $sql);
+        // prepared statement
+        $stmt = mysqli_prepare($conn, "SELECT * FROM users WHERE email = ?");
+
+        // binding real value to placeholder
+   
+        mysqli_stmt_bind_param($stmt, "s", $email);
+
+        // running the query
+        mysqli_stmt_execute($stmt);
+
+        // getting result
+        $result = mysqli_stmt_get_result($stmt);
 
         if (mysqli_num_rows($result) == 1) {
 
             $user = mysqli_fetch_assoc($result);
 
-            // Checks if typed password matches the hashed one in the database
+            // it checks if typed password matches the hashed one in database
             if (password_verify($password, $user['password'])) {
 
-                // Log if password matches
+            
                 $_SESSION['user']    = $user['name'];
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['role']    = $user['role'];
@@ -44,14 +53,15 @@ if (isset($_POST['login'])) {
                 exit;
 
             } else {
-                // Password did not match
                 $error = "Incorrect email or password. Please try again.";
             }
 
         } else {
-            // No user found with that email
             $error = "Incorrect email or password. Please try again.";
         }
+
+        // Close the prepared statement
+        mysqli_stmt_close($stmt);
     }
 }
 
