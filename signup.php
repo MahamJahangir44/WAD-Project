@@ -2,7 +2,7 @@
 session_start();
 include 'includes/db.php';
 
-// Check if already logged in 
+// check if user is logged in
 if (isset($_SESSION['user'])) {
     header("Location: index.php");
     exit;
@@ -17,40 +17,56 @@ if (isset($_POST['submit'])) {
     $password = $_POST['password'];
     $confirm  = $_POST['confirm_password'];
 
-    // Check all fields are filled
+    // check if all fields are filled
     if ($name == "" || $email == "" || $password == "" || $confirm == "") {
         $error = "Please fill in all fields.";
 
-    // Check passwords match
+    // Check if passwords match
     } elseif ($password != $confirm) {
         $error = "Passwords do not match.";
 
     } else {
+// prepared statement
+        $check_stmt = mysqli_prepare($conn, "SELECT id FROM users WHERE email = ?");
 
-        // Check if this email already has an account
-        $check = mysqli_query($conn, "SELECT id FROM users WHERE email = '$email'");
+        // bind the real value to placeholder
+        mysqli_stmt_bind_param($check_stmt, "s", $email);
 
-        if (mysqli_num_rows($check) > 0) {
+        // running the query
+        mysqli_stmt_execute($check_stmt);
+
+        // getting the result
+        $check_result = mysqli_stmt_get_result($check_stmt);
+
+        if (mysqli_num_rows($check_result) > 0) {
             $error = "This email is already registered. Please login instead.";
 
         } else {
 
             // Hash the password before saving
             $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+//prepared statement
+            $insert_stmt = mysqli_prepare($conn, "INSERT INTO users (name, email, password) VALUES (?, ?, ?)");
 
-            // Save the new user in database 
-            $sql = "INSERT INTO users (name, email, password) VALUES ('$name', '$email', '$hashed_password')";
+            // bind the real value to placeholder
+            mysqli_stmt_bind_param($insert_stmt, "sss", $name, $email, $hashed_password);
 
-            if (mysqli_query($conn, $sql)) {
+            // running the query
+            if (mysqli_stmt_execute($insert_stmt)) {
 
-                // Get the new user's info 
-                $get_user = mysqli_query($conn, "SELECT * FROM users WHERE email = '$email'");
-                $new_user = mysqli_fetch_assoc($get_user);
+                // prepared statement
+                $get_stmt = mysqli_prepare($conn, "SELECT * FROM users WHERE email = ?");
+                mysqli_stmt_bind_param($get_stmt, "s", $email);
+                mysqli_stmt_execute($get_stmt);
+                $get_result = mysqli_stmt_get_result($get_stmt);
+                $new_user   = mysqli_fetch_assoc($get_result);
 
-                // Save in session for auto login
+                // Save in session 
                 $_SESSION['user']    = $new_user['name'];
                 $_SESSION['user_id'] = $new_user['id'];
                 $_SESSION['role']    = $new_user['role'];
+
+                mysqli_stmt_close($get_stmt);
 
                 // Go to homepage
                 header("Location: index.php");
@@ -59,7 +75,11 @@ if (isset($_POST['submit'])) {
             } else {
                 $error = "Something went wrong. Please try again.";
             }
+
+            mysqli_stmt_close($insert_stmt);
         }
+
+        mysqli_stmt_close($check_stmt);
     }
 }
 
@@ -83,7 +103,6 @@ include 'includes/header.php';
                 <input type="text" name="name" id="signupName" placeholder=" " required>
                 <label>Full Name</label>
             </div>
-            <!-- JS will show error message here -->
             <small id="nameError" class="js-error"></small>
 
             <div class="input-group">
